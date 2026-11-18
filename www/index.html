@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MeetMap 위치 시험</title>
+<style>
+  :root { color-scheme: light dark; --bg:#f6f7f4; --card:#fff; --fg:#1d2b27; --muted:#5d6c66; --line:#dbe2dd; --accent:#1f7a68; --ok:#1f7a4d; --okbg:#e0f2e8; --bad:#a3322b; --badbg:#f9e0dd; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#141a18; --card:#1d2623; --fg:#e8efeb; --muted:#9db0a8; --line:#31403b; --accent:#55c1a8; --ok:#7fd9a6; --okbg:#1d3a2b; --bad:#f08e86; --badbg:#40211e; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:system-ui,sans-serif; font-size:15px; line-height:1.55;
+    padding: calc(env(safe-area-inset-top,0px) + 20px) 16px calc(env(safe-area-inset-bottom,0px) + 32px); }
+  main { max-width:640px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
+  h1 { font-size:21px; margin:0; }
+  p { margin:0; color:var(--muted); }
+  button { font:inherit; font-weight:700; padding:14px 16px; border-radius:12px; border:0; background:var(--accent); color:#fff; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 14px; display:flex; flex-direction:column; gap:6px; }
+  .name { font-weight:700; overflow-wrap:anywhere; }
+  .row { display:flex; justify-content:space-between; gap:10px; font-size:14px; }
+  .ok { color:var(--ok); font-weight:700; } .bad { color:var(--bad); font-weight:700; }
+  #sum { padding:12px 14px; border-radius:12px; font-weight:700; }
+  #sum.ok { background:var(--okbg); } #sum.bad { background:var(--badbg); }
+  pre { white-space:pre-wrap; overflow-wrap:anywhere; font-size:12px; color:var(--muted); margin:0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>갤러리 사진 위치 시험</h1>
+  <p>앱이 폰 갤러리의 최근 사진 12장에서 위치(GPS)를 읽을 수 있는지 확인해요. 사진은 어디에도 올라가지 않아요.</p>
+  <button id="go">최근 사진 12장 위치 확인</button>
+  <div id="sum" hidden></div>
+  <div id="list" style="display:flex;flex-direction:column;gap:10px"></div>
+  <pre id="log"></pre>
+</main>
+<script>
+  var $ = function (id) { return document.getElementById(id); };
+  function showErr(e) { $("log").textContent = "오류: " + (e && (e.message || e.errorMessage) || JSON.stringify(e)); }
+  $("go").addEventListener("click", async function () {
+    $("log").textContent = ""; $("list").innerHTML = ""; $("sum").hidden = true;
+    var P = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.MediaLoc;
+    if (!P) { $("log").textContent = "앱 기능(MediaLoc)을 찾지 못했어요. 앱으로 설치한 것이 맞는지 확인해 주세요."; return; }
+    try {
+      var r = await P.latest({ limit: 12 });
+      var items = r.items || [], withOrig = 0, plain = 0;
+      items.forEach(function (it) {
+        if (it.originalGps) withOrig++; if (it.plainGps) plain++;
+        var d = document.createElement("div"); d.className = "card";
+        d.innerHTML = '<div class="name"></div>' +
+          '<div class="row"><span>일반 방식(웹 선택창과 같은 방식)</span><span class="' + (it.plainGps ? "ok" : "bad") + '">' + (it.plainGps ? "위치 있음" : "위치 없음") + '</span></div>' +
+          '<div class="row"><span>앱 방식(원본 요청)</span><span class="' + (it.originalGps ? "ok" : "bad") + '">' + (it.originalGps ? "위치 있음" : "위치 없음") + '</span></div>' +
+          '<div class="row"><span>좌표</span><span></span></div>' +
+          (it.error ? '<pre></pre>' : '');
+        d.querySelector(".name").textContent = it.name + "  (" + it.date + ")";
+        d.querySelectorAll(".row")[2].lastElementChild.textContent = it.originalGps ? it.lat.toFixed(5) + ", " + it.lng.toFixed(5) : "-";
+        if (it.error) d.querySelector("pre").textContent = it.error;
+        $("list").appendChild(d);
+      });
+      var s = $("sum"); s.hidden = false;
+      s.className = withOrig > plain ? "ok" : (withOrig > 0 ? "ok" : "bad");
+      s.textContent = "총 " + items.length + "장 중  앱 방식 " + withOrig + "장 / 일반 방식 " + plain + "장에서 위치를 읽었어요.";
+    } catch (e) { showErr(e); }
+  });
+</script>
+</body>
+</html>

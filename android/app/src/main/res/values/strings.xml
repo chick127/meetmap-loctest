@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MeetMap 위치 시험</string>
+    <string name="title_activity_main">MeetMap 위치 시험</string>
+    <string name="package_name">com.meetmap.loctest</string>
+    <string name="custom_url_scheme">com.meetmap.loctest</string>
+</resources>

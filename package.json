@@ -1,0 +1,11 @@
+{
+  "name": "meetmap-loctest",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MeetMap 갤러리 사진 위치 읽기 시험 앱",
+  "dependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/cli": "^8.6.2",
+    "@capacitor/core": "^8.6.2"
+  }
+}
